@@ -3,16 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>WER IST DER STÄRKSTE?</title>
 
 <style>
 
+*{
+    box-sizing:border-box;
+}
+
 body{
-    font-family: Arial, sans-serif;
     margin:0;
     padding:20px;
-    background:#f2f2f2;
+    font-family:Arial, sans-serif;
+    background:#f4f4f4;
 }
 
 h1{
@@ -20,48 +23,60 @@ h1{
     margin-bottom:30px;
 }
 
-.container{
+.dashboard{
     display:grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns:repeat(3, 1fr);
     gap:20px;
 }
 
-.exercise{
+.card{
     background:white;
     border-radius:12px;
     padding:15px;
     box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
 
-.exercise h2{
+.card h2{
     text-align:center;
     margin-top:0;
+    margin-bottom:15px;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
-    margin-top:10px;
 }
 
-th, td{
+th,
+td{
     border:1px solid #ccc;
     padding:8px;
     text-align:center;
+    font-size:14px;
 }
 
 th{
     background:#efefef;
 }
 
-@media (max-width: 768px){
+.section-title{
+    background:#ddd;
+    font-weight:bold;
+}
 
-    .container{
-        grid-template-columns:1fr;
-    }
+/* MOBILE VERSION */
+@media (max-width: 768px){
 
     body{
         padding:10px;
+    }
+
+    .dashboard{
+        grid-template-columns:1fr;
+    }
+
+    .card{
+        width:100%;
     }
 
 }
@@ -72,75 +87,158 @@ th{
 
 <h1>WER IST DER STÄRKSTE?</h1>
 
-<div class="container" id="app"></div>
+<div class="dashboard" id="dashboard"></div>
 
 <script>
 
-// DEINE GOOGLE SHEETS ID
-const SHEET_ID = "16HW8wNIamfZdOGejQ_9imBdQw-AhhyQnAP9yflHtHY8";
+/*
+====================================================
+DATEN
+====================================================
+Da Google keine direkte responsive HTML-Ausgabe liefert,
+wird die Darstellung hier selbst aufgebaut.
 
-// JSON Feed URL
-const URL = `https://opensheet.elk.sh/${SHEET_ID}/Tabelle1`;
+Du kannst die Daten später automatisch aus Google Sheets
+laden oder hier direkt ergänzen.
+====================================================
+*/
 
-async function loadData(){
+const data = [
 
-    try{
+    {
+        title: "Kreuzheben",
+        rows: [
+            ["Kategorie", "1-Rep Max"],
+            ["Gewicht", "200kg"],
+            ["Name", "holpee01"],
+            ["Datum", "03.05.2026"]
+        ]
+    },
 
-        const response = await fetch(URL);
-        const data = await response.json();
+    {
+        title: "Pull-Ups",
+        rows: [
+            ["Kategorie", "Anzahl"],
+            ["Wiederholungen", "11"],
+            ["Name", "holpee01"],
+            ["Datum", "03.05.2026"]
+        ]
+    },
 
-        const app = document.getElementById("app");
+    {
+        title: "Clean & Jerk",
+        rows: [
+            ["Kategorie", "1-Rep Max"],
+            ["Gewicht", "95kg"],
+            ["Name", "holpee01"],
+            ["Datum", "03.05.2026"]
+        ]
+    },
 
-        app.innerHTML = "";
+    {
+        title: "Squats",
+        rows: [
+            ["Kategorie", "1-Rep Max"],
+            ["Gewicht", "180kg"],
+            ["Name", "holpee01"],
+            ["Datum", "03.05.2026"]
+        ]
+    },
 
-        data.forEach(item => {
+    {
+        title: "Dips",
+        rows: [
+            ["Kategorie", "Anzahl"],
+            ["Wiederholungen", "10"],
+            ["Name", "holpee01"],
+            ["Datum", "03.05.2026"]
+        ]
+    },
 
-            const card = document.createElement("div");
-            card.className = "exercise";
+    {
+        title: "Dead Hang",
+        rows: [
+            ["Kategorie", "Sekunden"],
+            ["Zeit", "120"],
+            ["Name", "holpee01"],
+            ["Datum", "03.05.2026"]
+        ]
+    },
 
-            card.innerHTML = `
-                <h2>${item.Disziplin}</h2>
+    {
+        title: "Bankdrücken",
+        rows: [
+            ["Kategorie", "1-Rep Max"],
+            ["Gewicht", "120kg"],
+            ["Name", "holpee01"],
+            ["Datum", "03.05.2026"]
+        ]
+    },
 
-                <table>
+    {
+        title: "Plank",
+        rows: [
+            ["Kategorie", "Sekunden"],
+            ["Zeit", "180"],
+            ["Name", "holpee01"],
+            ["Datum", "03.05.2026"]
+        ]
+    },
 
-                    <tr>
-                        <th>Kategorie</th>
-                        <td>${item.Kategorie}</td>
-                    </tr>
+    {
+        title: "Push-Ups",
+        rows: [
+            ["Kategorie", "Anzahl"],
+            ["Wiederholungen", "25"],
+            ["Name", "holpee01"],
+            ["Datum", "03.05.2026"]
+        ]
+    }
 
-                    <tr>
-                        <th>Wert</th>
-                        <td>${item.Wert}</td>
-                    </tr>
+];
 
-                    <tr>
-                        <th>Name</th>
-                        <td>${item.Name}</td>
-                    </tr>
+const dashboard = document.getElementById("dashboard");
 
-                    <tr>
-                        <th>Datum</th>
-                        <td>${item.Datum}</td>
-                    </tr>
+function renderCards(){
 
-                </table>
+    dashboard.innerHTML = "";
+
+    data.forEach(item => {
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        let tableRows = "";
+
+        item.rows.forEach(row => {
+
+            tableRows += `
+                <tr>
+                    <th>${row[0]}</th>
+                    <td>${row[1]}</td>
+                </tr>
             `;
-
-            app.appendChild(card);
 
         });
 
-    }catch(error){
+        card.innerHTML = `
+            <h2>${item.title}</h2>
 
-        console.error(error);
+            <table>
+                ${tableRows}
+            </table>
+        `;
 
-    }
+        dashboard.appendChild(card);
+
+    });
 
 }
 
-loadData();
+renderCards();
 
 </script>
 
 </body>
 </html>
+```
