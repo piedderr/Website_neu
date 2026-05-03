@@ -3,242 +3,131 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>WER IST DER STÄRKSTE?</title>
 
 <style>
 
-*{
-    box-sizing:border-box;
-}
-
 body{
+    font-family: Arial;
     margin:0;
-    padding:20px;
-    font-family:Arial, sans-serif;
+    padding:15px;
     background:#f4f4f4;
 }
 
 h1{
     text-align:center;
-    margin-bottom:30px;
+    margin-bottom:20px;
 }
 
-.dashboard{
+.container{
     display:grid;
     grid-template-columns:repeat(3, 1fr);
-    gap:20px;
+    gap:15px;
 }
 
 .card{
     background:white;
     border-radius:12px;
-    padding:15px;
+    padding:12px;
     box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
 
 .card h2{
     text-align:center;
     margin-top:0;
-    margin-bottom:15px;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
+    margin-top:10px;
 }
 
-th,
-td{
+td, th{
     border:1px solid #ccc;
-    padding:8px;
+    padding:6px;
     text-align:center;
-    font-size:14px;
+    font-size:13px;
 }
 
 th{
-    background:#efefef;
+    background:#eee;
 }
 
-.section-title{
-    background:#ddd;
-    font-weight:bold;
-}
-
-/* MOBILE VERSION */
+/* MOBILE: untereinander */
 @media (max-width: 768px){
-
-    body{
-        padding:10px;
-    }
-
-    .dashboard{
+    .container{
         grid-template-columns:1fr;
     }
-
-    .card{
-        width:100%;
-    }
-
 }
 
 </style>
 </head>
+
 <body>
 
 <h1>WER IST DER STÄRKSTE?</h1>
 
-<div class="dashboard" id="dashboard"></div>
+<div class="container" id="app"></div>
 
 <script>
 
-/*
-====================================================
-DATEN
-====================================================
-Da Google keine direkte responsive HTML-Ausgabe liefert,
-wird die Darstellung hier selbst aufgebaut.
+// DEINE GOOGLE SHEETS CSV URL
+const URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVXtxZZow1L1GJjyM7rOdXbC58dMM6pgL5QdntG7_0ilbAklihYEYfIvUBp_pd6pSjggx99ZdYJzgF/pub?output=csv&gid=91100154";
 
-Du kannst die Daten später automatisch aus Google Sheets
-laden oder hier direkt ergänzen.
-====================================================
-*/
+async function loadData(){
 
-const data = [
+    const res = await fetch(URL);
+    const text = await res.text();
 
-    {
-        title: "Kreuzheben",
-        rows: [
-            ["Kategorie", "1-Rep Max"],
-            ["Gewicht", "200kg"],
-            ["Name", "holpee01"],
-            ["Datum", "03.05.2026"]
-        ]
-    },
+    // CSV -> Zeilen
+    const rows = text.split("\n").map(r => r.split(","));
 
-    {
-        title: "Pull-Ups",
-        rows: [
-            ["Kategorie", "Anzahl"],
-            ["Wiederholungen", "11"],
-            ["Name", "holpee01"],
-            ["Datum", "03.05.2026"]
-        ]
-    },
+    const app = document.getElementById("app");
+    app.innerHTML = "";
 
-    {
-        title: "Clean & Jerk",
-        rows: [
-            ["Kategorie", "1-Rep Max"],
-            ["Gewicht", "95kg"],
-            ["Name", "holpee01"],
-            ["Datum", "03.05.2026"]
-        ]
-    },
+    // Erste Zeile = Titel der Übungen (Kreuzheben, Pull-Ups ...)
+    const titles = rows[0];
 
-    {
-        title: "Squats",
-        rows: [
-            ["Kategorie", "1-Rep Max"],
-            ["Gewicht", "180kg"],
-            ["Name", "holpee01"],
-            ["Datum", "03.05.2026"]
-        ]
-    },
+    // Jede Übung = 3 Spalten
+    const blockSize = 3;
 
-    {
-        title: "Dips",
-        rows: [
-            ["Kategorie", "Anzahl"],
-            ["Wiederholungen", "10"],
-            ["Name", "holpee01"],
-            ["Datum", "03.05.2026"]
-        ]
-    },
+    for(let b = 0; b < titles.length; b += blockSize){
 
-    {
-        title: "Dead Hang",
-        rows: [
-            ["Kategorie", "Sekunden"],
-            ["Zeit", "120"],
-            ["Name", "holpee01"],
-            ["Datum", "03.05.2026"]
-        ]
-    },
-
-    {
-        title: "Bankdrücken",
-        rows: [
-            ["Kategorie", "1-Rep Max"],
-            ["Gewicht", "120kg"],
-            ["Name", "holpee01"],
-            ["Datum", "03.05.2026"]
-        ]
-    },
-
-    {
-        title: "Plank",
-        rows: [
-            ["Kategorie", "Sekunden"],
-            ["Zeit", "180"],
-            ["Name", "holpee01"],
-            ["Datum", "03.05.2026"]
-        ]
-    },
-
-    {
-        title: "Push-Ups",
-        rows: [
-            ["Kategorie", "Anzahl"],
-            ["Wiederholungen", "25"],
-            ["Name", "holpee01"],
-            ["Datum", "03.05.2026"]
-        ]
-    }
-
-];
-
-const dashboard = document.getElementById("dashboard");
-
-function renderCards(){
-
-    dashboard.innerHTML = "";
-
-    data.forEach(item => {
+        const title = titles[b];
+        if(!title) continue;
 
         const card = document.createElement("div");
         card.className = "card";
 
-        let tableRows = "";
+        let html = `<h2>${title}</h2><table>`;
 
-        item.rows.forEach(row => {
+        for(let r = 1; r < rows.length; r++){
 
-            tableRows += `
+            const row = rows[r];
+
+            if(!row[b]) continue;
+
+            html += `
                 <tr>
-                    <th>${row[0]}</th>
-                    <td>${row[1]}</td>
+                    <td>${row[b] || ""}</td>
+                    <td>${row[b+1] || ""}</td>
+                    <td>${row[b+2] || ""}</td>
                 </tr>
             `;
+        }
 
-        });
+        html += "</table>";
 
-        card.innerHTML = `
-            <h2>${item.title}</h2>
-
-            <table>
-                ${tableRows}
-            </table>
-        `;
-
-        dashboard.appendChild(card);
-
-    });
-
+        card.innerHTML = html;
+        app.appendChild(card);
+    }
 }
 
-renderCards();
+loadData();
 
 </script>
 
 </body>
 </html>
-```
